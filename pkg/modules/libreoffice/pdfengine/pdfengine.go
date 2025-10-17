@@ -96,6 +96,11 @@ func (engine *LibreOfficePdfEngine) Encrypt(ctx context.Context, logger *zap.Log
 	return fmt.Errorf("encrypt PDF using LibreOffice: %w", gotenberg.ErrPdfEngineMethodNotSupported)
 }
 
+// AttachFiles is not available in this implementation.
+func (engine *LibreOfficePdfEngine) AttachFiles(ctx context.Context, logger *zap.Logger, filePaths []string, inputPath string) error {
+	return fmt.Errorf("attach files with LibreOffice: %w", gotenberg.ErrPdfEngineMethodNotSupported)
+}
+
 // Interface guards.
 var (
 	_ gotenberg.Module      = (*LibreOfficePdfEngine)(nil)

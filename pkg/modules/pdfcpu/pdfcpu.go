@@ -175,8 +175,11 @@ func (engine *PdfCpu) WriteMetadata(ctx context.Context, logger *zap.Logger, met
 // without modifying the main PDF content.
 func (engine *PdfCpu) AttachFiles(ctx context.Context, logger *zap.Logger, filePaths []string, inputPath string) error {
 	if len(filePaths) == 0 {
+		logger.Debug("no files to attach")
 		return nil
 	}
+
+	logger.Debug(fmt.Sprintf("attaching %d file(s) to %s: %v", len(filePaths), inputPath, filePaths))
 
 	// Build command with all files to attach in a single command
 	args := []string{
@@ -185,14 +188,20 @@ func (engine *PdfCpu) AttachFiles(ctx context.Context, logger *zap.Logger, fileP
 	}
 	args = append(args, filePaths...)
 
+	logger.Debug(fmt.Sprintf("pdfcpu command: %s %v", engine.binPath, args))
+
 	cmd, err := gotenberg.CommandContext(ctx, logger, engine.binPath, args...)
 	if err != nil {
 		return fmt.Errorf("create command for attaching files: %w", err)
 	}
 
-	if _, err := cmd.Exec(); err != nil {
+	output, err := cmd.Exec()
+	if err != nil {
+		logger.Error(fmt.Sprintf("pdfcpu attach failed: %s", err))
 		return fmt.Errorf("attach files with pdfcpu: %w", err)
 	}
+
+	logger.Debug(fmt.Sprintf("pdfcpu attach output: %s", output))
 
 	return nil
 }

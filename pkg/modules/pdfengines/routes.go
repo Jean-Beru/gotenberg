@@ -254,6 +254,14 @@ func WriteMetadataStub(ctx *api.Context, engine gotenberg.PdfEngine, metadata ma
 	return nil
 }
 
+// FormDataPdfAttachments extracts attachment file paths from form data.
+// Only files uploaded with the "attachments" field name are included.
+func FormDataPdfAttachments(form *api.FormData) []string {
+	var attachmentPaths []string
+	form.Attachments(&attachmentPaths)
+	return attachmentPaths
+}
+
 // FormDataPdfEncrypt extracts encryption parameters from form data.
 func FormDataPdfEncrypt(form *api.FormData) (userPassword, ownerPassword string) {
 	form.String("userPassword", &userPassword, "")
@@ -277,6 +285,22 @@ func EncryptPdfStub(ctx *api.Context, engine gotenberg.PdfEngine, userPassword, 
 	return nil
 }
 
+// AttachFilesStub adds files as attachments to PDF files.
+func AttachFilesStub(ctx *api.Context, engine gotenberg.PdfEngine, attachmentPaths []string, inputPaths []string) error {
+	if len(attachmentPaths) == 0 {
+		return nil
+	}
+
+	for _, inputPath := range inputPaths {
+		err := engine.AttachFiles(ctx, ctx.Log(), attachmentPaths, inputPath)
+		if err != nil {
+			return fmt.Errorf("attach files to PDF '%s': %w", inputPath, err)
+		}
+	}
+
+	return nil
+}
+
 // mergeRoute returns an [api.Route] which can merge PDFs.
 func mergeRoute(engine gotenberg.PdfEngine) api.Route {
 	return api.Route{
@@ -290,6 +314,7 @@ func mergeRoute(engine gotenberg.PdfEngine) api.Route {
 			pdfFormats := FormDataPdfFormats(form)
 			metadata := FormDataPdfMetadata(form, false)
 			userPassword, ownerPassword := FormDataPdfEncrypt(form)
+			attachmentPaths := FormDataPdfAttachments(form)
 
 			var inputPaths []string
 			var flatten bool
@@ -324,6 +349,11 @@ func mergeRoute(engine gotenberg.PdfEngine) api.Route {
 				}
 			}
 
+			err = AttachFilesStub(ctx, engine, attachmentPaths, outputPaths)
+			if err != nil {
+				return fmt.Errorf("attach files to PDFs: %w", err)
+			}
+
 			err = EncryptPdfStub(ctx, engine, userPassword, ownerPassword, outputPaths)
 			if err != nil {
 				return fmt.Errorf("encrypt PDFs: %w", err)
@@ -353,6 +383,7 @@ func splitRoute(engine gotenberg.PdfEngine) api.Route {
 			pdfFormats := FormDataPdfFormats(form)
 			metadata := FormDataPdfMetadata(form, false)
 			userPassword, ownerPassword := FormDataPdfEncrypt(form)
+			attachmentPaths := FormDataPdfAttachments(form)
 
 			var inputPaths []string
 			var flatten bool
@@ -384,6 +415,11 @@ func splitRoute(engine gotenberg.PdfEngine) api.Route {
 				if err != nil {
 					return fmt.Errorf("flatten PDFs: %w", err)
 				}
+			}
+
+			err = AttachFilesStub(ctx, engine, attachmentPaths, convertOutputPaths)
+			if err != nil {
+				return fmt.Errorf("attach files to PDFs: %w", err)
 			}
 
 			err = EncryptPdfStub(ctx, engine, userPassword, ownerPassword, convertOutputPaths)

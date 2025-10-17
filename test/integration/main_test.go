@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 		ScenarioInitializer: scenario.InitializeScenario,
 		Options: &godog.Options{
 			Format:      "pretty",
-			Paths:       []string{"features/pdfengines_attachments.feature"},
+			Paths:       []string{"features"},
 			Output:      colors.Colored(os.Stdout),
 			Concurrency: concurrency,
 		},

@@ -21,9 +21,10 @@ import (
 //
 //	form := ctx.FormData()
 type FormData struct {
-	values map[string][]string
-	files  map[string]string
-	errors error
+	values      map[string][]string
+	files       map[string]string
+	filesByField map[string][]string
+	errors      error
 }
 
 // Validate returns nil or an error related to the [FormData] values, with a
@@ -359,7 +360,8 @@ func (form *FormData) Paths(extensions []string, target *[]string) *FormData {
 }
 
 // Attachments binds the absolute paths of form data files that should be
-// attached to the PDF. All files will be attached as file attachments.
+// attached to the PDF. Only files uploaded with the "attachments" field name
+// will be included.
 //
 //	var attachments []string
 //
@@ -369,10 +371,13 @@ func (form *FormData) Attachments(target *[]string) *FormData {
 		return form
 	}
 
-	// Get all files regardless of extension
-	for _, filePath := range form.files {
-		*target = append(*target, filePath)
+	// Get files from the "attachments" field
+	if paths, ok := form.filesByField["attachments"]; ok {
+		*target = append(*target, paths...)
 	}
+
+	// Sort for consistent ordering
+	sort.Sort(gotenberg.AlphanumericSort(*target))
 
 	return form
 }
