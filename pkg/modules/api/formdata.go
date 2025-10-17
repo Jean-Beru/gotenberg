@@ -358,6 +358,25 @@ func (form *FormData) Paths(extensions []string, target *[]string) *FormData {
 	return form.paths(extensions, target)
 }
 
+// Attachments binds the absolute paths of form data files that should be
+// attached to the PDF. All files will be attached as file attachments.
+//
+//	var attachments []string
+//
+//	ctx.FormData().Attachments(&attachments)
+func (form *FormData) Attachments(target *[]string) *FormData {
+	if form.errors != nil {
+		return form
+	}
+
+	// Get all files regardless of extension
+	for _, filePath := range form.files {
+		*target = append(*target, filePath)
+	}
+
+	return form
+}
+
 // MandatoryPaths binds the absolute paths of form data files, according to a
 // list of file extensions, to a string slice variable. It populates an error
 // if there is no file for given file extensions.
