@@ -201,9 +201,9 @@ func (engine *QPdf) Encrypt(ctx context.Context, logger *zap.Logger, inputPath, 
 	return nil
 }
 
-// AttachFiles is not available in this implementation.
-func (engine *QPdf) AttachFiles(ctx context.Context, logger *zap.Logger, filePaths []string, inputPath string) error {
-	return fmt.Errorf("attach files with QPDF: %w", gotenberg.ErrPdfEngineMethodNotSupported)
+// EmbedFiles is not available in this implementation.
+func (engine *QPdf) EmbedFiles(ctx context.Context, logger *zap.Logger, filePaths []string, inputPath string) error {
+	return fmt.Errorf("embed files with QPDF: %w", gotenberg.ErrPdfEngineMethodNotSupported)
 }
 
 var (

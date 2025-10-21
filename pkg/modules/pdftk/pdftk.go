@@ -183,9 +183,9 @@ func (engine *PdfTk) Encrypt(ctx context.Context, logger *zap.Logger, inputPath,
 	return nil
 }
 
-// AttachFiles is not available in this implementation.
-func (engine *PdfTk) AttachFiles(ctx context.Context, logger *zap.Logger, filePaths []string, inputPath string) error {
-	return fmt.Errorf("attach files with PDFtk: %w", gotenberg.ErrPdfEngineMethodNotSupported)
+// EmbedFiles is not available in this implementation.
+func (engine *PdfTk) EmbedFiles(ctx context.Context, logger *zap.Logger, filePaths []string, inputPath string) error {
+	return fmt.Errorf("embed files with PDFtk: %w", gotenberg.ErrPdfEngineMethodNotSupported)
 }
 
 // Interface guards.

@@ -19,7 +19,7 @@ type multiPdfEngines struct {
 	readMetadataEngines  []gotenberg.PdfEngine
 	writeMetadataEngines []gotenberg.PdfEngine
 	passwordEngines      []gotenberg.PdfEngine
-	attachmentEngines    []gotenberg.PdfEngine
+	embedEngines         []gotenberg.PdfEngine
 }
 
 func newMultiPdfEngines(
@@ -30,7 +30,7 @@ func newMultiPdfEngines(
 	readMetadataEngines,
 	writeMetadataEngines,
 	passwordEngines,
-	attachmentEngines []gotenberg.PdfEngine,
+	embedEngines []gotenberg.PdfEngine,
 ) *multiPdfEngines {
 	return &multiPdfEngines{
 		mergeEngines:         mergeEngines,
@@ -40,7 +40,7 @@ func newMultiPdfEngines(
 		readMetadataEngines:  readMetadataEngines,
 		writeMetadataEngines: writeMetadataEngines,
 		passwordEngines:      passwordEngines,
-		attachmentEngines:    attachmentEngines,
+		embedEngines:         embedEngines,
 	}
 }
 
@@ -241,20 +241,20 @@ func (multi *multiPdfEngines) Encrypt(ctx context.Context, logger *zap.Logger, i
 	return fmt.Errorf("encrypt PDF using multi PDF engines: %w", err)
 }
 
-// AttachFiles adds files as attachments to a PDF using the first available
-// engine that supports file attachments.
-func (multi *multiPdfEngines) AttachFiles(ctx context.Context, logger *zap.Logger, filePaths []string, inputPath string) error {
+// EmbedFiles embeds files into a PDF using the first available
+// engine that supports file embedding.
+func (multi *multiPdfEngines) EmbedFiles(ctx context.Context, logger *zap.Logger, filePaths []string, inputPath string) error {
 	var err error
 	errChan := make(chan error, 1)
 
-	for _, engine := range multi.attachmentEngines {
+	for _, engine := range multi.embedEngines {
 		go func(engine gotenberg.PdfEngine) {
-			errChan <- engine.AttachFiles(ctx, logger, filePaths, inputPath)
+			errChan <- engine.EmbedFiles(ctx, logger, filePaths, inputPath)
 		}(engine)
 
 		select {
-		case attachErr := <-errChan:
-			errored := multierr.AppendInto(&err, attachErr)
+		case embedErr := <-errChan:
+			errored := multierr.AppendInto(&err, embedErr)
 			if !errored {
 				return nil
 			}
@@ -263,7 +263,7 @@ func (multi *multiPdfEngines) AttachFiles(ctx context.Context, logger *zap.Logge
 		}
 	}
 
-	return fmt.Errorf("attach files to PDF using multi PDF engines: %w", err)
+	return fmt.Errorf("embed files into PDF using multi PDF engines: %w", err)
 }
 
 // Interface guards.

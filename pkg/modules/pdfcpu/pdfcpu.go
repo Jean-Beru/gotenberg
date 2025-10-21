@@ -171,9 +171,9 @@ func (engine *PdfCpu) WriteMetadata(ctx context.Context, logger *zap.Logger, met
 	return fmt.Errorf("write PDF metadata with pdfcpu: %w", gotenberg.ErrPdfEngineMethodNotSupported)
 }
 
-// AttachFiles adds files as attachments to a PDF. All files are attached as file attachments
+// EmbedFiles embeds files into a PDF. All files are embedded as file attachments
 // without modifying the main PDF content.
-func (engine *PdfCpu) AttachFiles(ctx context.Context, logger *zap.Logger, filePaths []string, inputPath string) error {
+func (engine *PdfCpu) EmbedFiles(ctx context.Context, logger *zap.Logger, filePaths []string, inputPath string) error {
 	if len(filePaths) == 0 {
 		logger.Debug("no files to attach")
 		return nil

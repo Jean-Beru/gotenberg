@@ -735,7 +735,7 @@ func (s *scenario) thePdfShouldBeSetToLandscapeOrientation(ctx context.Context, 
 	return nil
 }
 
-func (s *scenario) thePdfShouldHaveTheFollowingAttachmentsToIt(ctx context.Context, name, should string, attachment string) error {
+func (s *scenario) thePdfShouldHaveTheFollowingEmbedsInIt(ctx context.Context, name, should string, embed string) error {
 	path, err := s.getPath(name)
 	if err != nil {
 		return fmt.Errorf("get path %q: %w", name, err)
@@ -757,16 +757,14 @@ func (s *scenario) thePdfShouldHaveTheFollowingAttachmentsToIt(ctx context.Conte
 		return fmt.Errorf("exec %q: %w", cmd, err)
 	}
 
-	found := strings.Contains(output, fmt.Sprintf("<fileName>%s</fileName>", attachment))
+	found := strings.Contains(output, fmt.Sprintf("<fileName>%s</fileName>", embed))
 
 	if invert && found {
-		return fmt.Errorf("attachment %q found", attachment)
+		return fmt.Errorf("embed %q found", embed)
 	}
 
-	fmt.Println(output)
-
 	if !invert && !found {
-		return fmt.Errorf("attachment %q not found", attachment)
+		return fmt.Errorf("embed %q not found", embed)
 	}
 
 	return nil
@@ -964,7 +962,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Then(`^the "([^"]*)" PDF should have (\d+) page\(s\)$`, s.thePdfShouldHavePages)
 	ctx.Then(`^the "([^"]*)" PDF (should|should NOT) be set to landscape orientation$`, s.thePdfShouldBeSetToLandscapeOrientation)
 	ctx.Then(`^the "([^"]*)" PDF (should|should NOT) have the following content at page (\d+):$`, s.thePdfShouldHaveTheFollowingContentAtPage)
-	ctx.Then(`^the "([^"]*)" PDF (should|should NOT) have the "([^"]*)" file attached to it$`, s.thePdfShouldHaveTheFollowingAttachmentsToIt)
+	ctx.Then(`^the "([^"]*)" PDF (should|should NOT) have the "([^"]*)" file embedded in it$`, s.thePdfShouldHaveTheFollowingEmbedsInIt)
 	ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 		if s.gotenbergContainer != nil {
 			errTerminate := s.gotenbergContainer.Terminate(ctx, testcontainers.StopTimeout(0))

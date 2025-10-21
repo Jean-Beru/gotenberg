@@ -359,20 +359,20 @@ func (form *FormData) Paths(extensions []string, target *[]string) *FormData {
 	return form.paths(extensions, target)
 }
 
-// Attachments binds the absolute paths of form data files that should be
-// attached to the PDF. Only files uploaded with the "attachments" field name
+// Embeds binds the absolute paths of form data files that should be
+// embedded in the PDF. Only files uploaded with the "embeds" field name
 // will be included.
 //
-//	var attachments []string
+//	var embeds []string
 //
-//	ctx.FormData().Attachments(&attachments)
-func (form *FormData) Attachments(target *[]string) *FormData {
+//	ctx.FormData().Embeds(&embeds)
+func (form *FormData) Embeds(target *[]string) *FormData {
 	if form.errors != nil {
 		return form
 	}
 
-	// Get files from the "attachments" field
-	if paths, ok := form.filesByField["attachments"]; ok {
+	// Get files from the "embeds" field
+	if paths, ok := form.filesByField["embeds"]; ok {
 		*target = append(*target, paths...)
 	}
 
