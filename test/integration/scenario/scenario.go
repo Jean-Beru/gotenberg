@@ -1262,6 +1262,89 @@ func (s *scenario) thePdfsShouldHaveEmbeddedFile(ctx context.Context, kind, shou
 	return nil
 }
 
+func (s *scenario) thePdfsShouldHaveEmbeddedFileWithRelationship(ctx context.Context, kind, embed, relationship string) error {
+	dirPath := fmt.Sprintf("%s/%s", s.workdir, s.resp.Header().Get("Gotenberg-Trace"))
+
+	_, err := os.Stat(dirPath)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("directory %q does not exist", dirPath)
+	}
+
+	var paths []string
+	err = filepath.Walk(dirPath, func(path string, info os.FileInfo, pathErr error) error {
+		if pathErr != nil {
+			return pathErr
+		}
+		if strings.EqualFold(filepath.Ext(info.Name()), ".pdf") {
+			paths = append(paths, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("walk %q: %w", dirPath, err)
+	}
+
+	for _, path := range paths {
+		cmd := []string{
+			"qpdf",
+			filepath.Base(path),
+			"--json-output",
+		}
+
+		output, err := execCommandInIntegrationToolsContainer(ctx, cmd, path)
+		if err != nil {
+			return fmt.Errorf("exec %q: %w", cmd, err)
+		}
+
+		var pdfJSON map[string]any
+		if err := json.Unmarshal([]byte(output), &pdfJSON); err != nil {
+			return fmt.Errorf("parse PDF JSON: %w", err)
+		}
+
+		objects, ok := pdfJSON["objects"].(map[string]any)
+		if !ok {
+			return fmt.Errorf("PDF JSON missing 'objects' key")
+		}
+
+		found := false
+		for _, obj := range objects {
+			objMap, ok := obj.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			typeVal, _ := objMap["/Type"].(string)
+			if typeVal != "/Filespec" {
+				continue
+			}
+
+			uf, _ := objMap["/UF"].(string)
+			if uf == "" {
+				uf, _ = objMap["/F"].(string)
+			}
+
+			if uf != embed {
+				continue
+			}
+
+			afRel, _ := objMap["/AFRelationship"].(string)
+			expected := "/" + relationship
+			if afRel != expected {
+				return fmt.Errorf("embedded file %q has AFRelationship %q, expected %q", embed, afRel, expected)
+			}
+
+			found = true
+			break
+		}
+
+		if !found {
+			return fmt.Errorf("filespec for %q not found in PDF JSON", embed)
+		}
+	}
+
+	return nil
+}
+
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	s := &scenario{}
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
@@ -1300,6 +1383,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Then(`^the (response|webhook request) PDF\(s\) (should|should NOT) be flatten$`, s.thePdfsShouldBeFlatten)
 	ctx.Then(`^the (response|webhook request) PDF\(s\) (should|should NOT) be encrypted`, s.thePdfsShouldBeEncrypted)
 	ctx.Then(`^the (response|webhook request) PDF\(s\) (should|should NOT) have the "([^"]*)" file embedded$`, s.thePdfsShouldHaveEmbeddedFile)
+	ctx.Then(`^the (response|webhook request) PDF\(s\) should have the "([^"]*)" file embedded with relationship "([^"]*)"$`, s.thePdfsShouldHaveEmbeddedFileWithRelationship)
 	ctx.Then(`^the "([^"]*)" PDF should have (\d+) page\(s\)$`, s.thePdfShouldHavePages)
 	ctx.Then(`^the "([^"]*)" PDF (should|should NOT) be set to landscape orientation$`, s.thePdfShouldBeSetToLandscapeOrientation)
 	ctx.Then(`^the "([^"]*)" PDF (should|should NOT) have the following content at page (\d+):$`, s.thePdfShouldHaveTheFollowingContentAtPage)
