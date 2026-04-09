@@ -336,48 +336,18 @@ func (engine *QPdf) Encrypt(ctx context.Context, logger *slog.Logger, inputPath,
 	return nil
 }
 
-// EmbedFiles embeds files into a PDF using QPDF's --add-attachment flag.
+// EmbedFiles is not available in this implementation.
 func (engine *QPdf) EmbedFiles(ctx context.Context, logger *slog.Logger, filePaths []string, inputPath string) error {
-	ctx, span := gotenberg.Tracer().Start(ctx, "qpdf.EmbedFiles",
+	_, span := gotenberg.Tracer().Start(ctx, "qpdf.EmbedFiles",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(semconv.ServerAddress(engine.binPath)),
 	)
 	defer span.End()
 
-	if len(filePaths) == 0 {
-		span.SetStatus(codes.Ok, "")
-		return nil
-	}
-
-	logger.Debug(fmt.Sprintf("embedding %d file(s) to %s with QPDF: %v", len(filePaths), inputPath, filePaths))
-
-	args := make([]string, 0, 3+len(engine.globalArgs)+3*len(filePaths))
-	args = append(args, inputPath)
-	args = append(args, engine.globalArgs...)
-	args = append(args, "--newline-before-endstream")
-	for _, fp := range filePaths {
-		args = append(args, "--add-attachment", fp, "--")
-	}
-	args = append(args, "--replace-input")
-
-	cmd, err := gotenberg.CommandContext(ctx, logger, engine.binPath, args...)
-	if err != nil {
-		err = fmt.Errorf("create command for embedding files: %w", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
-	_, err = cmd.Exec()
-	if err != nil {
-		err = fmt.Errorf("embed files with QPDF: %w", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
-	span.SetStatus(codes.Ok, "")
-	return nil
+	err := fmt.Errorf("embed files with QPDF: %w", gotenberg.ErrPdfEngineMethodNotSupported)
+	span.RecordError(err)
+	span.SetStatus(codes.Error, err.Error())
+	return err
 }
 
 // EmbedFilesMetadata sets metadata on already-embedded files in a PDF using

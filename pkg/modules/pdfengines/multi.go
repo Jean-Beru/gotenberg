@@ -22,7 +22,7 @@ type multiPdfEngines struct {
 	writeMetadataEngines      []gotenberg.PdfEngine
 	passwordEngines           []gotenberg.PdfEngine
 	embedEngines              []gotenberg.PdfEngine
-	embedFilesMetadataEngines []gotenberg.PdfEngine
+	embedMetadataEngines      []gotenberg.PdfEngine
 	readBookmarksEngines      []gotenberg.PdfEngine
 	writeBookmarksEngines     []gotenberg.PdfEngine
 	watermarkEngines          []gotenberg.PdfEngine
@@ -39,7 +39,7 @@ func newMultiPdfEngines(
 	writeMetadataEngines,
 	passwordEngines,
 	embedEngines,
-	embedFilesMetadataEngines,
+	embedMetadataEngines,
 	readBookmarksEngines,
 	writeBookmarksEngines,
 	watermarkEngines,
@@ -55,7 +55,7 @@ func newMultiPdfEngines(
 		writeMetadataEngines:      writeMetadataEngines,
 		passwordEngines:           passwordEngines,
 		embedEngines:              embedEngines,
-		embedFilesMetadataEngines: embedFilesMetadataEngines,
+		embedMetadataEngines:      embedMetadataEngines,
 		readBookmarksEngines:      readBookmarksEngines,
 		writeBookmarksEngines:     writeBookmarksEngines,
 		watermarkEngines:          watermarkEngines,
@@ -618,7 +618,7 @@ func (multi *multiPdfEngines) EmbedFilesMetadata(ctx context.Context, logger *sl
 	var err error
 	errChan := make(chan error, 1)
 
-	for _, engine := range multi.embedFilesMetadataEngines {
+	for _, engine := range multi.embedMetadataEngines {
 		go func(engine gotenberg.PdfEngine) {
 			errChan <- engine.EmbedFilesMetadata(ctx, logger, metadata, inputPath)
 		}(engine)
