@@ -60,6 +60,29 @@ Feature: /forms/pdfengines/embed
       | embeds | testdata/embed_2.xml | file |
     Then the response status code should be 401
 
+  Scenario: POST /forms/pdfengines/embed with QPDF (no metadata)
+    Given I have a Gotenberg container with the following environment variable(s):
+      | PDFENGINES_EMBED_ENGINES | qpdf |
+    When I make a "POST" request to Gotenberg at the "/forms/pdfengines/embed" endpoint with the following form data and header(s):
+      | files  | testdata/page_1.pdf  | file |
+      | embeds | testdata/embed_1.xml | file |
+    Then the response status code should be 200
+    And there should be 1 PDF(s) in the response
+    And the response PDF(s) should have the "embed_1.xml" file embedded
+
+  Scenario: POST /forms/pdfengines/embed with metadata (QPDF)
+    Given I have a Gotenberg container with the following environment variable(s):
+      | PDFENGINES_EMBED_ENGINES | qpdf |
+    When I make a "POST" request to Gotenberg at the "/forms/pdfengines/embed" endpoint with the following form data and header(s):
+      | files          | testdata/page_1.pdf                                           | file  |
+      | embeds         | testdata/embed_1.xml                                          | file  |
+      | embedsMetadata | {"embed_1.xml":{"mimeType":"text/xml","relationship":"Data"}} | field |
+    Then the response status code should be 200
+    And the response header "Content-Type" should be "application/pdf"
+    And there should be 1 PDF(s) in the response
+    And the response PDF(s) should have the "embed_1.xml" file embedded
+    And the response PDF(s) should have the "embed_1.xml" file embedded with relationship "Data"
+
   Scenario: POST /foo/forms/pdfengines/embed (Root Path)
     Given I have a Gotenberg container with the following environment variable(s):
       | API_ENABLE_DEBUG_ROUTE | true  |
